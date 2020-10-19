@@ -43,7 +43,10 @@ class MovieSchedule(Resource):
 
         for schedule in movie_schedules:
             theatre = TheatreModel.get_theatre_by_id(theatre_id=schedule.theatre_id)
-            result[theatre.name] = schedule.time.strftime("%H:%M")
+            if result.get(theatre.name):
+                result[theatre.name].append(schedule.time.strftime("%H:%M"))
+            else:
+                result[theatre.name] = [schedule.time.strftime("%H:%M")]
 
         return result, 200
 
@@ -56,7 +59,7 @@ class MovieSchedule(Resource):
         schedule = ScheduleModel(theatre_id=theatre_id, movie_id=movie_id, time=movie_time, screen=data["screen"])
         schedule.save_to_db()
 
-        return None, 201
+        return {"movie": movie_name, "theatre": data["theatre"], "time": schedule.time}, 201
 
 
 class TheatreSchedule(Resource):
@@ -94,7 +97,10 @@ class TheatreSchedule(Resource):
 
         for schedule in theatre_schedules:
             movie = MovieModel.get_movie_by_id(movie_id=schedule.movie_id)
-            result[movie.name] = schedule.time.strftime("%H:%M")
+            if result.get(movie.name):
+                result[movie.name].append(schedule.time.strftime("%H:%M"))
+            else:
+                result[movie.name] = [schedule.time.strftime("%H:%M")]
 
         return result, 200
 
@@ -107,4 +113,4 @@ class TheatreSchedule(Resource):
         schedule = ScheduleModel(theatre_id=theatre_id, movie_id=movie_id, time=movie_time, screen=data["screen"])
         schedule.save_to_db()
 
-        return None, 201
+        return {"movie": data["movie"], "theatre": theatre_name, "time": schedule.time}, 201

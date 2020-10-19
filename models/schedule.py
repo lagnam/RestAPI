@@ -41,5 +41,3 @@ class ScheduleModel(db.Model):
                                               ScheduleModel.screen,
                                               ScheduleModel.time).all()
         return query_result
-
-
