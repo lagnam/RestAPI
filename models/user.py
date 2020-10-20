@@ -25,4 +25,4 @@ class UserModel(db.Model):
         return cls.query.filter_by(name=name).first()
 
     def get_json(self):
-        return {'name': self.name, 'type': self.type}
+        return {"name": self.name, "type": self.type}

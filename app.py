@@ -4,7 +4,7 @@ from flask_restful import Api
 from resources import user, movie, theatre, schedule
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
 api = Api(app)
 
 
@@ -20,8 +20,8 @@ def create_tables():
     db.create_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from db import db
+
     db.init_app(app)
     app.run(port=5000, debug=True)
-

@@ -29,5 +29,4 @@ class MovieModel(db.Model):
         return cls.query.filter_by(id=movie_id).first()
 
     def get_json(self):
-        return {'name': self.name, 'genre': self.genre}
-
+        return {"name": self.name, "genre": self.genre}

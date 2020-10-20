@@ -5,17 +5,9 @@ from models.user import UserModel
 class User(Resource):
     parser = reqparse.RequestParser()
 
-    parser.add_argument(
-        'type',
-        type=str,
-        help="Movie genre needs to be passed"
-    )
+    parser.add_argument("type", type=str, help="Movie genre needs to be passed")
 
-    parser.add_argument(
-        'updated_name',
-        type=str,
-        help="Movie genre needs to be passed"
-    )
+    parser.add_argument("name", type=str, help="Movie genre needs to be passed")
 
     def get(self, name):
         user = UserModel.get_user(name=name)
@@ -48,8 +40,10 @@ class User(Resource):
 
         if len(data) == 0:
             return {"error": "No data passed to update"}, 401
-        elif list(data.keys()) not in list(user.__dict__.keys()):
-            return {"error": f"Passed parameters doesn't match with the expected parameters:{list(movie.__dict__.keys())}"}, 401
+        elif not set(data.keys()).issubset(set(user.__dict__.keys())):
+            return {
+                "error": f"Passed parameters doesn't match with the expected parameters:{list(user.__dict__.keys())}"
+            }, 401
 
         if not user:
             return {"error": f"No user with the name {name}"}, 404
@@ -67,4 +61,3 @@ class User(Resource):
         user.delete_from_db()
 
         return None, 204
-

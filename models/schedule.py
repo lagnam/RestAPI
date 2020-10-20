@@ -27,17 +27,6 @@ class ScheduleModel(db.Model):
         db.session.commit()
 
     @classmethod
-    def get_movie_schedule(cls, movie_id):
-        query_result = cls.query.filter_by(movie_id=movie_id).order_by(
-            ScheduleModel.time).with_entities(ScheduleModel.theatre_id,
-                                              ScheduleModel.screen,
-                                              ScheduleModel.time).all()
-        return query_result
-
-    @classmethod
-    def get_theatre_schedule(cls, theatre_id):
-        query_result = cls.query.filter_by(theatre_id=theatre_id).order_by(
-            ScheduleModel.time).with_entities(ScheduleModel.movie_id,
-                                              ScheduleModel.screen,
-                                              ScheduleModel.time).all()
+    def get_schedule(cls, **kwargs):
+        query_result = cls.query.filter_by(**kwargs).order_by(ScheduleModel.time).all()
         return query_result

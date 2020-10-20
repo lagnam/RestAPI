@@ -31,4 +31,4 @@ class TheatreModel(db.Model):
         return cls.query.filter_by(id=theatre_id).first()
 
     def get_json(self):
-        return {'name': self.name, 'screens': self.screens, 'location': self.location}
+        return {"name": self.name, "screens": self.screens, "location": self.location}
