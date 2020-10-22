@@ -36,15 +36,15 @@ class Movie(Resource):
         data = Movie.parser.parse_args()
         movie = MovieModel.get_movie(name)
 
+        if not movie:
+            return {"error": f"No movie with the name {name}"}, 404
+
         if len(data) == 0:
             return {"error": "No data passed to update"}, 401
         elif not set(data.keys()).issubset(set(movie.__dict__.keys())):
             return {
                 "error": f"Passed parameters doesn't match with the expected parameters:{list(movie.__dict__.keys())}"
             }, 401
-
-        if not movie:
-            return {"error": f"No movie with the name {name}"}, 404
 
         movie.__dict__.update(data)
         movie.save_to_db()
@@ -60,7 +60,7 @@ class Movie(Resource):
         schedules = ScheduleModel.get_schedule(movie_id=movie.id)
         if len(schedules) > 0:
             return {
-                "error": f"Delete schedule of all the screens before deleting the theatre"
+                "error": f"Delete schedule of the movie before deleting it"
             }, 404
 
         movie.delete_from_db()

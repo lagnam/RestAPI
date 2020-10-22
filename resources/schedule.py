@@ -12,19 +12,19 @@ class MovieSchedule(Resource):
     parser = reqparse.RequestParser()
 
     parser.add_argument(
-        "theatre", type=str, required=True, help="theatre name needs to be passed"
+        "theatre", type=str, help="theatre name needs to be passed"
     )
 
     parser.add_argument(
-        "screen", type=str, required=True, help="screen name needs to be passed"
+        "screen", type=str, help="screen name needs to be passed"
     )
 
     parser.add_argument(
-        "time", type=str, required=True, help="time name needs to be passed"
+        "time", type=str, help="time name needs to be passed"
     )
 
     parser.add_argument(
-        "updated_time", type=str, required=True, help="time name needs to be passed"
+        "updated_time", type=str, help="updated_time name needs to be passed"
     )
 
     def get(self, movie_name):
@@ -47,6 +47,10 @@ class MovieSchedule(Resource):
 
     def post(self, movie_name):
         data = MovieSchedule.parser.parse_args()
+
+        if not all(key in data for key in ['time', 'theatre', 'screen']):
+            return {"error": "['time', 'theatre', 'screen'] parameters required for creating a schedule"}, 401
+
         theatre_id = TheatreModel.get_theatre(name=data["theatre"]).id
         movie_id = MovieModel.get_movie(movie_name).id
         movie_time = datetime.strptime(data["time"], "%H:%M").time()
@@ -65,23 +69,24 @@ class MovieSchedule(Resource):
             "time": schedule.time,
         }, 201
 
-    def put(self, name):
+    def put(self, movie_name):
         data = MovieSchedule.parser.parse_args()
-        if not {"theatre", "time", "updated_time"}.issubset(set(data.keys())):
+        parameters = set(data.keys())
+        if "time" in parameters and "updated_time" not in parameters:
             return {
-                "error": "Theatre, time and updated_time are required for update"
+                "error": "updated_time are required for updating schedule time"
+            }, 401
+        elif not {"time", "updated_time"} == parameters:
+            return {
+                "error": "Only updation of time is allowed for updating any other information create a new schedule"
             }, 401
 
-        movie = MovieModel.get_movie(name)
-        theatre = TheatreModel.get_theatre(data["theatre"])
+        movie = MovieModel.get_movie(movie_name)
 
         if not movie:
-            return {"error": f"No movie with the name {name}"}, 404
-        elif not theatre:
-            return {"error": f"No theatre with the name {data['theatre']}"}, 404
+            return {"error": f"No movie with the name {movie_name}"}, 404
 
-        schedule = ScheduleModel.get_schedule()
-
+        schedule = ScheduleModel.get_schedule(movie_id=movie.id, **data)[0]
         if not schedule:
             return {"error": f"No schedule with the passed data"}, 404
 
@@ -90,12 +95,16 @@ class MovieSchedule(Resource):
 
         return None, 204
 
-    def delete(self, name):
-        theatre = TheatreModel.get_theatre(name)
-        if not theatre:
-            return {"error": f"No Theatre with the name {theatre}"}, 404
+    def delete(self, movie_name):
+        data = MovieSchedule.parser.parse_args()
+        movie = MovieModel.get_movie(movie_name)
 
-        theatre.delete_from_db()
+        schedules = ScheduleModel.get_schedule(movie_id=movie.id, **data)
+        if not schedules:
+            return {"error": f"No schedule with the passed data"}, 404
+
+        for schedule in schedules:
+            schedule.delete_from_db()
 
         return None, 204
 
@@ -152,3 +161,43 @@ class TheatreSchedule(Resource):
             "theatre": theatre_name,
             "time": schedule.time,
         }, 201
+
+    def put(self, theatre_name):
+        data = MovieSchedule.parser.parse_args()
+        parameters = set(data.keys())
+        if "time" in parameters and "updated_time" not in parameters:
+            return {
+                "error": "updated_time are required for updating schedule time"
+            }, 401
+        elif not {"time", "updated_time"} == parameters:
+            return {
+                "error": "Only updation of time is allowed for updating any other information create a new schedule"
+            }, 401
+
+        theatre = TheatreModel.get_theatre(theatre_name)
+        if not theatre:
+            return {"error": f"No movie with the name {theatre_name}"}, 404
+
+        schedule = ScheduleModel.get_schedule(theatre_id=theatre.id, **data)[0]
+        if not schedule:
+            return {"error": f"No schedule with the passed data"}, 404
+
+        schedule["time"] = data["updated_time"]
+        schedule.save_to_db()
+
+        return None, 204
+
+    def delete(self, theatre_name):
+        data = MovieSchedule.parser.parse_args()
+        theatre = TheatreModel.get_theatre(theatre_name)
+        if not theatre:
+            return {"error": f"No movie with the name {theatre_name}"}, 404
+
+        schedules = ScheduleModel.get_schedule(theatre_id=theatre.id, **data)
+        if not schedules:
+            return {"error": f"No schedule with the passed data"}, 404
+
+        for schedule in schedules:
+            schedule.delete_from_db()
+
+        return None, 204

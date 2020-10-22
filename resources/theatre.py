@@ -37,7 +37,6 @@ class Theatre(Resource):
 
     def put(self, name):
         data = Theatre.parser.parse_args()
-        theatre = TheatreModel.get_theatre(name)
 
         if len(data) == 0:
             return {"error": "No data passed to update"}, 401
@@ -46,23 +45,25 @@ class Theatre(Resource):
                 "error": f"Passed parameters doesn't match with the expected parameters:{list(theatre.__dict__.keys())}"
             }, 401
 
+        theatre = TheatreModel.get_theatre(name)
         if not theatre:
             return {"error": f"No theatre with the name {name}"}, 404
 
         schedules = ScheduleModel.get_schedule(theatre_id=theatre.id)
 
-        if theatre.screens > data["screens"]:
-            screens = []
-            for schedule in schedules:
-                if schedule.screen not in screens and data["screens"] < schedule.screen:
-                    screens.append(schedule.screen)
+        if data.get("screens"):
+            if theatre.screens > data["screens"]:
+                screens = []
+                for schedule in schedules:
+                    if schedule.screen not in screens and data["screens"] < schedule.screen:
+                        screens.append(schedule.screen)
 
-            if screens:
-                return {
-                    "error": f"Delete schedule of the {screens} screens before reducing the screens"
-                }, 404
-        elif data.get("screens") and data["screens"] <= 0:
-            return {"error": "Pass a valid screens number"}, 401
+                if screens:
+                    return {
+                        "error": f"Delete schedule of theatre screens {screens}  before reducing the screens"
+                    }, 404
+            elif data["screens"] <= 0:
+                return {"error": "Pass a valid screens number"}, 401
 
         theatre.__dict__.update(data)
         theatre.save_to_db()
