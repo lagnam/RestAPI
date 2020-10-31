@@ -6,7 +6,6 @@ class User(Resource):
     parser = reqparse.RequestParser()
 
     parser.add_argument("type", type=str, help="Movie genre needs to be passed")
-
     parser.add_argument("name", type=str, help="Movie genre needs to be passed")
 
     def get(self, name):
@@ -24,40 +23,27 @@ class User(Resource):
         data = User.parser.parse_args()
 
         if not data.get("type"):
-            return {"error": "type of user is not passed"}, 401
+            return {"error": "type of user is not passed"}, 400
 
-        user = UserModel(name, **data)
+        data["name"] = name
+        user = UserModel(**data)
         user.save_to_db()
 
         return user.get_json(), 201
 
     def put(self, name):
         data = User.parser.parse_args()
+        data = {k: v for k, v in data.items() if v is not None}
+
         user = UserModel.get_user(name)
-
-        if not data.get("updated_name"):
-            return {"error": "updated_name parameter not passed"}, 401
-
-        if len(data) == 0:
-            return {"error": "No data passed to update"}, 401
-        elif not set(data.keys()).issubset(set(user.__dict__.keys())):
-            return {
-                "error": f"Passed parameters doesn't match with the expected parameters:{list(user.__dict__.keys())}"
-            }, 401
-
         if not user:
             return {"error": f"No user with the name {name}"}, 404
 
-        user.__dict__.update(data)
+        if len(data) == 0:
+            return {"error": "No data passed to update"}, 400
+
+        for k, v in data.items():
+            setattr(user, k, v)
         user.save_to_db()
-
-        return None, 204
-
-    def delete(self, name):
-        user = UserModel.get_movie(name)
-        if not user:
-            return {"error": f"No Movie with the name {name}"}, 404
-
-        user.delete_from_db()
 
         return None, 204

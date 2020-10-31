@@ -22,15 +22,16 @@ class Movie(Resource):
         data = Movie.parser.parse_args()
 
         if not data.get("genre"):
-            return {"error": "Genre parameter not passed"}, 401
+            return {"error": "Genre parameter not passed"}, 400
 
         if MovieModel.get_movie(name):
-            return {"error": f"Movie already exists with the name {name}"}, 401
+            return {"error": f"Movie already exists with the name {name}"}, 400
 
+        data = {k:v for k,v in data.items() if v is not None}
         movie = MovieModel(name, **data)
         movie.save_to_db()
 
-        return movie.get_json(), 200
+        return movie.get_json(), 201
 
     def put(self, name):
         data = Movie.parser.parse_args()
@@ -39,14 +40,13 @@ class Movie(Resource):
         if not movie:
             return {"error": f"No movie with the name {name}"}, 404
 
-        if len(data) == 0:
-            return {"error": "No data passed to update"}, 401
-        elif not set(data.keys()).issubset(set(movie.__dict__.keys())):
-            return {
-                "error": f"Passed parameters doesn't match with the expected parameters:{list(movie.__dict__.keys())}"
-            }, 401
+        data = {k: v for k, v in data.items() if v is not None}
 
-        movie.__dict__.update(data)
+        if len(data) == 0:
+            return {"error": "No data passed to update"}, 400
+
+        for k, v in data.items():
+            setattr(movie, k, v)
         movie.save_to_db()
 
         return None, 204
@@ -61,7 +61,7 @@ class Movie(Resource):
         if len(schedules) > 0:
             return {
                 "error": f"Delete schedule of the movie before deleting it"
-            }, 404
+            }, 400
 
         movie.delete_from_db()
 

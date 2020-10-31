@@ -18,7 +18,7 @@ class Theatre(Resource):
         if theatre:
             return theatre.get_json(), 200
 
-        return {"error": f"No Movie with the name {name}"}, 404
+        return {"error": f"No theatre with the name {name}"}, 404
 
     def post(self, name):
         data = Theatre.parser.parse_args()
@@ -26,33 +26,32 @@ class Theatre(Resource):
         if not (data.get("screens") and data.get("location")):
             return {
                 "error": "screes/location parameters are required for creating a theatre"
-            }, 401
+            }, 400
         elif data.get("screens") <= 0:
-            return {"error": "Pass a valid screens number"}, 401
+            return {"error": "Pass a valid screens number"}, 400
 
         movie = TheatreModel(name, data["screens"], data["location"])
         movie.save_to_db()
 
-        return movie.get_json(), 200
+        return movie.get_json(), 201
 
     def put(self, name):
         data = Theatre.parser.parse_args()
-
-        if len(data) == 0:
-            return {"error": "No data passed to update"}, 401
-        elif not set(data.keys()).issubset(set(theatre.__dict__.keys())):
-            return {
-                "error": f"Passed parameters doesn't match with the expected parameters:{list(theatre.__dict__.keys())}"
-            }, 401
+        data = {k: v for k, v in data.items() if v is not None}
 
         theatre = TheatreModel.get_theatre(name)
         if not theatre:
             return {"error": f"No theatre with the name {name}"}, 404
 
+        if len(data) == 0:
+            return {"error": "No data passed to update"}, 400
+
         schedules = ScheduleModel.get_schedule(theatre_id=theatre.id)
 
-        if data.get("screens"):
-            if theatre.screens > data["screens"]:
+        if data.get("screens") is not None:
+            if data["screens"] <= 0:
+                return {"error": "Pass a valid screens number"}, 400
+            elif theatre.screens > data["screens"]:
                 screens = []
                 for schedule in schedules:
                     if schedule.screen not in screens and data["screens"] < schedule.screen:
@@ -61,11 +60,10 @@ class Theatre(Resource):
                 if screens:
                     return {
                         "error": f"Delete schedule of theatre screens {screens}  before reducing the screens"
-                    }, 404
-            elif data["screens"] <= 0:
-                return {"error": "Pass a valid screens number"}, 401
+                    }, 400
 
-        theatre.__dict__.update(data)
+        for k, v in data.items():
+            setattr(theatre, k, v)
         theatre.save_to_db()
 
         return None, 204
@@ -80,7 +78,7 @@ class Theatre(Resource):
         if len(schedules) > 0:
             return {
                 "error": f"Delete schedule of all the screens before deleting the theatre"
-            }, 404
+            }, 400
 
         theatre.delete_from_db()
 
