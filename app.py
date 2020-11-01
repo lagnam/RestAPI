@@ -1,8 +1,12 @@
+import logging
+
 from flask import Flask
 from flask_restful import Api
 
 from resources import user, movie, theatre, movie_schedule, theatre_schedule
 from init_db import initialize_db
+
+logging.basicConfig(level=logging.INFO, filename="logging.log", format="%(levelname)s : %(asctime)s : %(name)s : %(message)s")
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"

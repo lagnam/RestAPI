@@ -1,7 +1,10 @@
 from datetime import datetime
+import logging
 
 from db import db
 from exceptions import *
+
+logger = logging.getLogger(__name__)
 
 
 class ScheduleModel(db.Model):
@@ -22,10 +25,12 @@ class ScheduleModel(db.Model):
         self.time = datetime.strptime(time, "%H:%M").time()
 
     def save_to_db(self):
+        logger.info("saving object to db")
         db.session.add(self)
         db.session.commit()
 
     def delete_from_db(self):
+        logger.info("deleting object from db")
         db.session.delete(self)
         db.session.commit()
 
@@ -35,6 +40,7 @@ class ScheduleModel(db.Model):
             if kwargs.get("time"):
                 kwargs["time"] = datetime.strptime(kwargs["time"], "%H:%M").time()
         except ValueError:
+            logger.exception("Invalid time passed")
             raise InvalidTimeException("Invalid time format")
         query_result = cls.query.filter_by(**kwargs).order_by(ScheduleModel.time).all()
         return query_result

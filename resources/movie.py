@@ -1,6 +1,10 @@
+import logging
+
 from flask_restful import Resource, reqparse
 from models.movie import MovieModel
 from models.schedule import ScheduleModel
+
+logger = logging.getLogger(__name__)
 
 
 class Movie(Resource):
@@ -21,13 +25,14 @@ class Movie(Resource):
     def post(self, name):
         data = Movie.parser.parse_args()
 
+        logger.info("Validating request data")
         if not data.get("genre"):
             return {"error": "Genre parameter not passed"}, 400
 
         if MovieModel.get_movie(name):
             return {"error": f"Movie already exists with the name {name}"}, 400
 
-        data = {k:v for k,v in data.items() if v is not None}
+        data = {k: v for k,v in data.items() if v is not None}
         movie = MovieModel(name, **data)
         movie.save_to_db()
 
@@ -37,6 +42,7 @@ class Movie(Resource):
         data = Movie.parser.parse_args()
         movie = MovieModel.get_movie(name)
 
+        logger.info("Validating request data")
         if not movie:
             return {"error": f"No movie with the name {name}"}, 404
 
@@ -54,11 +60,13 @@ class Movie(Resource):
     def delete(self, name):
         movie = MovieModel.get_movie(name)
 
+        logger.info("Validating request data")
         if not movie:
             return {"error": f"No Movie with the name {name}"}, 404
 
         schedules = ScheduleModel.get_schedule(movie_id=movie.id)
         if len(schedules) > 0:
+            logger.info("Schedule not found")
             return {
                 "error": f"Delete schedule of the movie before deleting it"
             }, 400

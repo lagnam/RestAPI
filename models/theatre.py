@@ -1,4 +1,8 @@
+import logging
+
 from db import db
+
+logger = logging.getLogger(__name__)
 
 
 class TheatreModel(db.Model):
@@ -15,10 +19,12 @@ class TheatreModel(db.Model):
         self.location = location
 
     def save_to_db(self):
+        logger.info("saving object to db")
         db.session.add(self)
         db.session.commit()
 
     def delete_from_db(self):
+        logger.info("deleting object from db")
         db.session.delete(self)
         db.session.commit()
 

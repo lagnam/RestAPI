@@ -1,4 +1,8 @@
+import logging
+
 from db import db
+
+logger = logging.getLogger(__name__)
 
 
 class UserModel(db.Model):
@@ -13,6 +17,7 @@ class UserModel(db.Model):
         self.type = type
 
     def save_to_db(self):
+        logger.info("saving object to db")
         db.session.add(self)
         db.session.commit()
 

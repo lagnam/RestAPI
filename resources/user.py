@@ -1,5 +1,9 @@
+import logging
+
 from flask_restful import Resource, reqparse
 from models.user import UserModel
+
+logger = logging.getLogger(__name__)
 
 
 class User(Resource):
@@ -17,11 +21,11 @@ class User(Resource):
         return {"error": f"No user with the name {user}"}, 404
 
     def post(self, name):
+        logger.info("Validating request data")
         if UserModel.get_user(name):
             return {"error": f"User already existing with the name {name}"}, 400
 
         data = User.parser.parse_args()
-
         if not data.get("type"):
             return {"error": "type of user is not passed"}, 400
 
@@ -35,6 +39,7 @@ class User(Resource):
         data = User.parser.parse_args()
         data = {k: v for k, v in data.items() if v is not None}
 
+        logger.info("Validating request data")
         user = UserModel.get_user(name)
         if not user:
             return {"error": f"No user with the name {name}"}, 404

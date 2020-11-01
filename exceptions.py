@@ -1,0 +1,2 @@
+class InvalidTimeException(Exception):
+    pass

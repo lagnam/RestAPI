@@ -1,6 +1,10 @@
+import logging
+
 from flask_restful import Resource, reqparse
 from models.theatre import TheatreModel
 from models.schedule import ScheduleModel
+
+logger = logging.getLogger(__name__)
 
 
 class Theatre(Resource):
@@ -23,6 +27,7 @@ class Theatre(Resource):
     def post(self, name):
         data = Theatre.parser.parse_args()
 
+        logger.info("Validating request data")
         if not (data.get("screens") and data.get("location")):
             return {
                 "error": "screes/location parameters are required for creating a theatre"
@@ -39,6 +44,7 @@ class Theatre(Resource):
         data = Theatre.parser.parse_args()
         data = {k: v for k, v in data.items() if v is not None}
 
+        logger.info("Validating request data")
         theatre = TheatreModel.get_theatre(name)
         if not theatre:
             return {"error": f"No theatre with the name {name}"}, 404
@@ -71,6 +77,7 @@ class Theatre(Resource):
     def delete(self, name):
         theatre = TheatreModel.get_theatre(name)
 
+        logger.info("Validating request data")
         if not theatre:
             return {"error": f"No Theatre with the name {theatre}"}, 404
 

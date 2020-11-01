@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from flask_restful import Resource, reqparse
 
@@ -6,6 +7,8 @@ from models.movie import MovieModel
 from models.theatre import TheatreModel
 from models.schedule import ScheduleModel
 from exceptions import *
+
+logger = logging.getLogger(__name__)
 
 
 class MovieSchedule(Resource):
@@ -32,6 +35,7 @@ class MovieSchedule(Resource):
         data = MovieSchedule.parser.parse_args()
         data = {k: v for k, v in data.items() if v is not None}
 
+        logger.info("Validating request data")
         if "screen" in data or "time" in data:
             return {"error": "Display of only theatre schedule is allowed"}, 400
         elif len(data) > 1 or (len(data) == 1 and "theatre" not in data):
@@ -64,6 +68,7 @@ class MovieSchedule(Resource):
         data = MovieSchedule.parser.parse_args()
         data = {k: v for k, v in data.items() if v is not None}
 
+        logger.info("Validating request data")
         if not all(key in data for key in ['time', 'theatre', 'screen']):
             return {"error": "['time', 'theatre', 'screen'] parameters required for creating a schedule"}, 400
         elif data["screen"] <= 0:
@@ -87,6 +92,7 @@ class MovieSchedule(Resource):
             )
 
             if movie_schedule:
+                logger.info("Schedule already exists")
                 return {"error": "Schedule already exists"}, 400
 
             schedule = ScheduleModel(
@@ -109,6 +115,7 @@ class MovieSchedule(Resource):
     def put(self, movie_name):
         data = MovieSchedule.parser.parse_args()
 
+        logger.info("Validating request data")
         if any(True for key, val in data.items() if val is None):
             return {
                 "error": f"{list(data.keys())} are required for updating schedule time"
@@ -134,6 +141,7 @@ class MovieSchedule(Resource):
                 time=data["time"]
             )
             if not result:
+                logger.info("No schedule found")
                 return {"error": f"No schedule with the passed data"}, 404
             schedule = result[0]
         except InvalidTimeException as e:
@@ -152,6 +160,7 @@ class MovieSchedule(Resource):
         data = MovieSchedule.parser.parse_args()
         data = {k: v for k, v in data.items() if v is not None}
 
+        logger.info("Validating request data")
         if "theatre" not in data:
             return {"error": "theatre is required for deleting the schedule"}, 400
         elif "time" in data and "screen" not in data:
@@ -175,10 +184,12 @@ class MovieSchedule(Resource):
         data["theatre_id"] = theatre.id
         try:
             schedules = ScheduleModel.get_schedule(movie_id=movie.id, **data)
-            if not schedules:
-                return {"error": f"No schedule with the passed data"}, 404
         except InvalidTimeException as e:
             return {"error": "Invalid time format"}, 400
+
+        if not schedules:
+            logger.info("No schedule found")
+            return {"error": f"No schedule with the passed data"}, 404
 
         for schedule in schedules:
             schedule.delete_from_db()
